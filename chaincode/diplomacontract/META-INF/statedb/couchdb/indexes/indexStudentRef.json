@@ -1,0 +1,6 @@
+{
+  "index": { "fields": ["docType", "studentRef"] },
+  "ddoc": "indexStudentRefDoc",
+  "name": "indexStudentRef",
+  "type": "json"
+}

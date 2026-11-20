@@ -1,0 +1,17 @@
+# Registre des diplômes
+# Les espaces authentifiés et les liens de partage ne doivent jamais être indexés.
+User-agent: *
+Allow: /$
+Allow: /request-access
+Allow: /privacy
+Allow: /terms
+Disallow: /v/
+Disallow: /verify
+Disallow: /diplomas
+Disallow: /my-diplomas
+Disallow: /issue
+Disallow: /dashboard
+Disallow: /404
+
+# Remplacez le domaine par celui de votre installation (voir VITE_SITE_URL).
+Sitemap: https://diplomes.example.ma/sitemap.xml

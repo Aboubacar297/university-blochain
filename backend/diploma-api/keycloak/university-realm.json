@@ -1,0 +1,178 @@
+{
+  "realm": "university",
+  "displayName": "Registre des diplômes",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "loginWithEmailAllowed": false,
+  "bruteForceProtected": true,
+  "internationalizationEnabled": true,
+  "supportedLocales": [
+    "fr",
+    "en"
+  ],
+  "defaultLocale": "fr",
+  "accessTokenLifespan": 600,
+  "roles": {
+    "realm": [
+      {
+        "name": "university",
+        "description": "Université : émission et signature des diplômes"
+      },
+      {
+        "name": "ministry",
+        "description": "Ministère : audit et supervision"
+      },
+      {
+        "name": "recruiter",
+        "description": "Recruteur : vérification des diplômes"
+      },
+      {
+        "name": "student",
+        "description": "Étudiant : consultation et partage de ses diplômes"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "diploma-frontend",
+      "name": "Portail du registre de diplômes",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "protocol": "openid-connect",
+      "rootUrl": "http://localhost:5173",
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://localhost:4173/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173",
+        "http://localhost:4173"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*##http://localhost:4173/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "student_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "username",
+            "claim.name": "student_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "diploma-backend",
+      "name": "Backend du registre (compte de service)",
+      "enabled": true,
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-backend-secret-change-me",
+      "protocol": "openid-connect"
+    }
+  ],
+  "users": [
+    {
+      "username": "univ1",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Service",
+      "lastName": "Scolarité",
+      "email": "scolarite@example.com",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Diplome#2026",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "university"
+      ]
+    },
+    {
+      "username": "ministere1",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Direction",
+      "lastName": "Enseignement supérieur",
+      "email": "ministere@example.com",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Diplome#2026",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ministry"
+      ]
+    },
+    {
+      "username": "recruteur1",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Service",
+      "lastName": "Recrutement",
+      "email": "recrutement@example.com",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Diplome#2026",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "recruiter"
+      ]
+    },
+    {
+      "username": "D130012345",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Yasmine",
+      "lastName": "Alaoui",
+      "email": "yasmine.alaoui@example.com",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Diplome#2026",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "student"
+      ]
+    },
+    {
+      "username": "service-account-diploma-backend",
+      "enabled": true,
+      "serviceAccountClientId": "diploma-backend",
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-users",
+          "query-users"
+        ]
+      }
+    }
+  ],
+  "passwordPolicy": "length(12) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1) and notUsername"
+}

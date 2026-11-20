@@ -1,0 +1,75 @@
+# Services applicatifs du backend : stockage S3 hors chaîne (RustFS), Keycloak (IAM) et l'API.
+# Le réseau Hyperledger Fabric (peers, orderers, CA) est démarré séparément (dossier blockchain/).
+# NB : l'image minio/minio n'existe plus sur Docker Hub ; RustFS (API S3 compatible) la remplace.
+services:
+  rustfs:
+    image: rustfs/rustfs:latest
+    environment:
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      RUSTFS_SECRET_KEY: ${MINIO_SECRET_KEY:?défini MINIO_SECRET_KEY dans .env}
+      RUSTFS_LOG_LEVEL: info
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - rustfs-data:/data
+
+  keycloak-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?défini KEYCLOAK_DB_PASSWORD dans .env}
+    volumes:
+      - keycloak-db:/var/lib/postgresql/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?défini KEYCLOAK_ADMIN_PASSWORD dans .env}
+    ports:
+      - "8080:8080"
+    volumes:
+      # Realm "university" importé au premier démarrage (rôles, client, comptes de test)
+      - ./keycloak/university-realm.json:/opt/keycloak/data/import/university-realm.json:ro
+    depends_on:
+      - keycloak-db
+
+  api:
+    build: .
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      MINIO_ENDPOINT: rustfs
+      KEYCLOAK_URL: http://keycloak:8080
+      # Le peer Fabric tourne sur l'hôte / un autre réseau Docker : adapter si besoin
+      FABRIC_PEER_ENDPOINT: ${FABRIC_PEER_ENDPOINT_DOCKER:-host.docker.internal:7051}
+      FABRIC_CERT_PATH: /certs/signcerts
+      FABRIC_KEY_PATH: /certs/keystore
+      FABRIC_TLS_CERT_PATH: /certs/tls/ca.crt
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Identité (User1 d'Org1) et certificat TLS du peer, montés en lecture seule
+      - ${FABRIC_ID_DIR:-./certs/id}/msp/signcerts:/certs/signcerts:ro
+      - ${FABRIC_ID_DIR:-./certs/id}/msp/keystore:/certs/keystore:ro
+      - ${FABRIC_PEER_TLS_DIR:-./certs/tls}:/certs/tls:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - rustfs
+      - keycloak
+
+volumes:
+  rustfs-data:
+  keycloak-db:
